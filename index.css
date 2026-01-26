@@ -1,0 +1,26 @@
+/* Hide orphan loading spinners - multiple approaches */
+body > div:not(#root) {
+  display: none !important;
+}
+
+/* Hide any loading spinner that appears after the main content */
+#root ~ div,
+#root ~ * {
+  display: none !important;
+}
+
+/* Hide loading spinners that appear at the bottom of pages */
+.flex.flex-col.items-center.justify-center.p-8:last-child,
+.flex.flex-col.items-center.justify-center.py-12:last-child {
+  display: none !important;
+}
+
+/* Hide any orphan loading text */
+p:contains("Loading..."):last-child {
+  display: none !important;
+}
+
+/* If loading spinner is the last visible element on the page, hide it */
+body > #root > * > *:last-child > .flex.flex-col.items-center.justify-center {
+  display: none !important;
+}

@@ -1,0 +1,4 @@
+{
+  "_comment": "tutorStats is reserved for future analytics (e.g. tutor performance history). Current verification and statistics are computed dynamically from bookings.",
+  "data": []
+}

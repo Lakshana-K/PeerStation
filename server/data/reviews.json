@@ -1,0 +1,35 @@
+[
+  {
+    "bookingId": "booking_009",
+    "tutorId": "usr_1de8a3f7c9b",
+    "studentId": "404ed3583854b19b8734ec09",
+    "rating": 2,
+    "comment": "okay",
+    "reviewId": "a1119902d889919b8831a48b"
+  },
+  {
+    "bookingId": "booking_010",
+    "tutorId": "usr_2fg9h4j6k8m",
+    "studentId": "404ed3583854b19b8734ec09",
+    "rating": 5,
+    "comment": "good!",
+    "reviewId": "306f38852af7819b88320f07"
+  },
+  {
+    "bookingId": "booking_011",
+    "tutorId": "usr_5jk8m7n9p1q",
+    "studentId": "404ed3583854b19b8734ec09",
+    "rating": 3,
+    "comment": "not bad",
+    "reviewId": "94dd7c0b472a719b88323785"
+  },
+  {
+    "bookingId": "booking_012",
+    "tutorId": "usr_1de8a3f7c9b",
+    "studentId": "404ed3583854b19b8734ec09",
+    "rating": 5,
+    "comment": "nice",
+    "createdAt": "2026-01-04T10:23:01.064Z",
+    "reviewId": "52ecf59deba4319b88881fcd"
+  }
+]

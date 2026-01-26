@@ -1,0 +1,68 @@
+[
+  {
+    "userId": "b526ec54d593919b8781957b",
+    "type": "SESSION_BOOKED",
+    "title": "🎓 New Session Booked!",
+    "message": "sarah booked a session for python on Jan 7",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-04T14:31:08.392Z",
+    "readAt": null,
+    "notificationId": "6d43c44f0904119b896b496f"
+  },
+  {
+    "userId": "404ed3583854b19b8734ec09",
+    "type": "BOOKING_CONFIRMED",
+    "title": "✅ Booking Confirmed!",
+    "message": "Your session with marcus for python is confirmed",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-04T14:31:08.406Z",
+    "readAt": null,
+    "notificationId": "3c0d16d06497f19b896b497b"
+  },
+  {
+    "userId": "404ed3583854b19b8734ec09",
+    "type": "SESSION_BOOKED",
+    "title": "🎓 New Session Booked!",
+    "message": "bunny booked a session for python on Jan 7",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-07T06:45:10.415Z",
+    "readAt": null,
+    "notificationId": "8e0c987f3884419b9733c295"
+  },
+  {
+    "userId": "1d2347e6247e619b89884ff9",
+    "type": "BOOKING_CONFIRMED",
+    "title": "✅ Booking Confirmed!",
+    "message": "Your session with sarah for python is confirmed",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-07T06:45:10.426Z",
+    "readAt": null,
+    "notificationId": "06349bc5d8a2119b9733c29d"
+  },
+  {
+    "userId": "b526ec54d593919b8781957b",
+    "type": "SESSION_BOOKED",
+    "title": "🎓 New Session Booked!",
+    "message": "sarah booked a session for python on Jan 7",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-08T01:43:50.904Z",
+    "readAt": null,
+    "notificationId": "14c3cf8865c5b19b9b463f7d"
+  },
+  {
+    "userId": "404ed3583854b19b8734ec09",
+    "type": "BOOKING_CONFIRMED",
+    "title": "✅ Booking Confirmed!",
+    "message": "Your session with marcus for python is confirmed",
+    "actionUrl": "/sessions",
+    "isRead": false,
+    "createdAt": "2026-01-08T01:43:50.914Z",
+    "readAt": null,
+    "notificationId": "f709b7c83728419b9b463f87"
+  }
+]

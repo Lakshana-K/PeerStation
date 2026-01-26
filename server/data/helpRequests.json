@@ -1,0 +1,205 @@
+[
+  {
+    "requestId": "req_001",
+    "studentId": "404ed3583854b19b8734ec09",
+    "studentName": "sarah",
+    "subject": "Web Development",
+    "topic": "React useState Hook Not Updating",
+    "description": "I'm having trouble with useState in my React component. The state updates but the component doesn't re-render. I've tried using useEffect but it still doesn't work. Need help debugging this issue.",
+    "urgency": "high",
+    "preferredFormat": "Online",
+    "status": "claimed",
+    "createdAt": "2026-01-04T10:30:00Z",
+    "responses": [],
+    "claimedBy": "b526ec54d593919b8781957b"
+  },
+  {
+    "requestId": "req_002",
+    "studentId": "usr_2fg9h4j6k8m",
+    "studentName": "Marcus Wong",
+    "subject": "Python",
+    "topic": "List Comprehension Syntax Error",
+    "description": "Getting a syntax error when trying to use list comprehension with conditional statements. The error message isn't clear and I can't figure out what's wrong with my code.",
+    "urgency": "medium",
+    "preferredFormat": "In-person",
+    "status": "claimed",
+    "createdAt": "2026-01-04T09:15:00Z",
+    "responses": [],
+    "claimedBy": "404ed3583854b19b8734ec09"
+  },
+  {
+    "requestId": "req_003",
+    "studentId": "404ed3583854b19b8734ec09",
+    "studentName": "sarah",
+    "subject": "SQL",
+    "topic": "JOIN Query Returning Duplicate Rows",
+    "description": "My SQL query using INNER JOIN is returning duplicate rows. I think it's related to the relationship between my tables but I'm not sure how to fix it. Need help understanding JOIN relationships better.",
+    "urgency": "medium",
+    "preferredFormat": "Online",
+    "status": "resolved",
+    "createdAt": "2026-01-03T14:20:00Z",
+    "resolvedAt": "2026-01-03T16:45:00Z",
+    "resolvedBy": "usr_1de8a3f7c9b",
+    "responses": [
+      {
+        "responseId": "resp_001",
+        "tutorId": "usr_1de8a3f7c9b",
+        "tutorName": "Marcus Wong",
+        "message": "Hi! I can help with this. The duplicate rows are likely because your JOIN is creating a Cartesian product. Try using DISTINCT or reviewing your JOIN conditions. I'm available for a session to walk through it if you'd like!",
+        "createdAt": "2026-01-03T14:45:00Z"
+      }
+    ]
+  },
+  {
+    "requestId": "req_004",
+    "studentId": "usr_5jk8m7n9p1q",
+    "studentName": "Lee Xing Yi",
+    "subject": "Data Structures",
+    "topic": "Binary Search Tree Implementation",
+    "description": "Need help implementing a balanced binary search tree in Python. Specifically struggling with the rotation logic for AVL trees. Would appreciate if someone could explain the concept and help with the code.",
+    "urgency": "low",
+    "preferredFormat": "Online",
+    "status": "claimed",
+    "createdAt": "2026-01-02T11:00:00Z",
+    "responses": [
+      {
+        "responseId": "resp_002",
+        "tutorId": "404ed3583854b19b8734ec09",
+        "tutorName": "sarah",
+        "message": "I can help with this! I recently worked on AVL trees. The rotation logic can be tricky but I'll walk you through it step by step. Let me know when you're free!",
+        "createdAt": "2026-01-02T12:30:00Z"
+      }
+    ],
+    "claimedBy": "404ed3583854b19b8734ec09"
+  },
+  {
+    "requestId": "req_005",
+    "studentId": "usr_6mn9p2q3r4s",
+    "studentName": "Yap Si Hui",
+    "subject": "JavaScript",
+    "topic": "Async/Await Error Handling",
+    "description": "How do I properly handle errors in async/await functions? My try-catch blocks aren't catching errors from nested async functions. Getting a lot of unhandled promise rejections.",
+    "urgency": "high",
+    "preferredFormat": "In-person",
+    "status": "claimed",
+    "createdAt": "2026-01-04T08:00:00Z",
+    "responses": [
+      {
+        "responseId": "resp_003",
+        "tutorId": "usr_2fg9h4j6k8m",
+        "tutorName": "Marcus Wong",
+        "message": "This is a common issue! You need to make sure all your promises are properly awaited. I can show you some patterns for error handling. Available today after 3pm!",
+        "createdAt": "2026-01-04T08:45:00Z"
+      },
+      {
+        "responseId": "resp_004",
+        "tutorId": "404ed3583854b19b8734ec09",
+        "tutorName": "sarah",
+        "message": "I've dealt with this before! Happy to help. The key is to understand promise chains and error propagation. Let me know if you still need help!",
+        "createdAt": "2026-01-04T09:30:00Z"
+      }
+    ],
+    "claimedBy": "404ed3583854b19b8734ec09"
+  },
+  {
+    "requestId": "req_006",
+    "studentId": "404ed3583854b19b8734ec09",
+    "studentName": "sarah",
+    "subject": "Node.js",
+    "topic": "Express Middleware Order Issues",
+    "description": "My Express middleware isn't executing in the right order. Some routes work fine but others skip the authentication middleware. Not sure if it's a problem with how I'm defining routes or middleware placement.",
+    "urgency": "medium",
+    "preferredFormat": "Online",
+    "status": "claimed",
+    "createdAt": "2026-01-01T15:30:00Z",
+    "responses": [],
+    "claimedBy": "b526ec54d593919b8781957b"
+  },
+  {
+    "requestId": "req_007",
+    "studentId": "usr_7pq4r5s6t7u",
+    "studentName": "Julian Chew",
+    "subject": "CSS",
+    "topic": "Flexbox Layout Not Working",
+    "description": "Trying to create a responsive navbar using flexbox but the items aren't aligning properly. I've tried different justify-content values but nothing seems to work. The layout breaks on mobile too.",
+    "urgency": "low",
+    "preferredFormat": "Online",
+    "status": "resolved",
+    "createdAt": "2025-12-30T10:00:00Z",
+    "resolvedAt": "2025-12-30T14:20:00Z",
+    "resolvedBy": "404ed3583854b19b8734ec09",
+    "responses": [
+      {
+        "responseId": "resp_005",
+        "tutorId": "404ed3583854b19b8734ec09",
+        "tutorName": "sarah",
+        "message": "I can help! Flexbox can be tricky. Usually it's either missing flex-wrap or incorrect flex-direction. I'm free this afternoon if you want to go over it together!",
+        "createdAt": "2025-12-30T11:15:00Z"
+      }
+    ]
+  },
+  {
+    "requestId": "req_008",
+    "studentId": "usr_2fg9h4j6k8m",
+    "studentName": "Marcus Wong",
+    "subject": "React",
+    "topic": "Context API vs Redux - When to Use Which?",
+    "description": "I'm building a medium-sized app and trying to decide between Context API and Redux for state management. What are the pros and cons of each? When should I use one over the other?",
+    "urgency": "low",
+    "preferredFormat": "Online",
+    "status": "claimed",
+    "createdAt": "2025-12-28T16:00:00Z",
+    "responses": [
+      {
+        "responseId": "resp_006",
+        "tutorId": "404ed3583854b19b8734ec09",
+        "tutorName": "sarah",
+        "message": "Great question! Context API is simpler for small to medium apps, Redux is better for complex state with lots of updates. I recently migrated a project from Context to Redux and can share my experience!",
+        "createdAt": "2025-12-28T17:30:00Z"
+      }
+    ],
+    "claimedBy": "423824fa1faea19b8a576999"
+  },
+  {
+    "studentId": "404ed3583854b19b8734ec09",
+    "studentName": "sarah",
+    "topic": "react website help",
+    "subject": "Other",
+    "description": "i need help with my components",
+    "urgency": "high",
+    "status": "claimed",
+    "createdAt": "2026-01-04T09:12:03.350Z",
+    "responses": [],
+    "claimedBy": "b526ec54d593919b8781957b",
+    "expiresAt": "2026-01-11T09:12:03.351Z",
+    "requestId": "6e8e76162cbf519b8847281f"
+  },
+  {
+    "studentId": "423824fa1faea19b8a576999",
+    "studentName": "chiikawa",
+    "topic": "help",
+    "subject": "Other",
+    "description": "help",
+    "urgency": "medium",
+    "status": "claimed",
+    "createdAt": "2026-01-04T18:50:33.054Z",
+    "responses": [],
+    "claimedBy": "b526ec54d593919b8781957b",
+    "expiresAt": "2026-01-11T18:50:33.054Z",
+    "requestId": "8ccc47033ff0a19b8a58c8ea"
+  },
+  {
+    "studentId": "b526ec54d593919b8781957b",
+    "studentName": "marcus",
+    "topic": "help",
+    "subject": "Other",
+    "description": "help",
+    "urgency": "medium",
+    "status": "claimed",
+    "createdAt": "2026-01-05T16:18:05.784Z",
+    "responses": [],
+    "claimedBy": "1d2347e6247e619b89884ff9",
+    "expiresAt": "2026-01-12T16:18:05.785Z",
+    "requestId": "4ec7c11b331bf19b8ef39164"
+  }
+]

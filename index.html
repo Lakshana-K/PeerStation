@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>peerstation</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      const cleanup = () => {
+        // Remove anything outside #root
+        document.querySelectorAll('body > *:not(#root):not(script)').forEach(el => {
+          el.remove();
+        });
+        
+        // Find divs with "Loading..." text
+        document.querySelectorAll('div').forEach(div => {
+          if (div.textContent.includes('Loading...') && !div.closest('#root')) {
+            div.remove();
+          }
+        });
+      };
+      
+      // Run cleanup every 100ms
+      setInterval(cleanup, 100);
+      
+      // Also run on DOM changes
+      const observer = new MutationObserver(cleanup);
+      observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+  </body>
+</html>
