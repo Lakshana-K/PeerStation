@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/availability.js
+// REPLACE: Your existing src/api/availability.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const availabilityApi = {
   async getAll() {
@@ -35,7 +40,6 @@ export const availabilityApi = {
     const response = await fetch(`${API_URL}/availability/tutor/${tutorId}`);
     const slots = await response.json();
     
-    // Group by day of week
     const schedule = {
       Monday: [],
       Tuesday: [],

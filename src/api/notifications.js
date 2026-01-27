@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/notifications.js
+// REPLACE: Your existing src/api/notifications.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const notificationsApi = {
   async getAll() {
@@ -43,12 +48,10 @@ export const notificationsApi = {
 
   async markAllAsRead(userId) {
     try {
-      // Get all notifications for this user
       const response = await fetch(`${API_URL}/notifications`);
       const notifications = await response.json();
       const unread = notifications.filter(n => n.userId === userId && !n.isRead);
       
-      // Mark each unread notification as read
       const updatePromises = unread.map(notification => 
         fetch(`${API_URL}/notifications/${notification.notificationId}`, {
           method: 'PUT',

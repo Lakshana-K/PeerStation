@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/tutorStats.js
+// REPLACE: Your existing src/api/tutorStats.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const tutorStatsApi = {
   async getAll() {

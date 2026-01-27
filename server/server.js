@@ -1,279 +1,273 @@
-import dotenv from "dotenv";
-import mongoose from "mongoose";
+// ========================================
+// FILE: server/server.js
+// REPLACE: Your existing server/server.js
+// ⚠️ IMPORTANT: Update line 14 with your Vercel URL
+// ========================================
+
 import express from "express";
 import cors from "cors";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-// Get the directory name of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from the server directory
-dotenv.config({ path: join(__dirname, '.env') });
-
-/* =========================
-   MongoDB Connection
-========================= */
-const connectDB = async () => {
-  try {
-    if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI is not defined in .env file");
-    }
-    
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-    console.log("✅ MongoDB Connected Successfully");
-  } catch (err) {
-    console.error("❌ MongoDB Connection Error:", err.message);
-    process.exit(1);
-  }
-};
-
-connectDB();
+dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Request logger
-app.use((req, res, next) => {
-  console.log("➡️", req.method, req.url);
-  next();
-});
+// ========================================
+// CORS Configuration
+// ⚠️ UPDATE LINE 14 WITH YOUR VERCEL URL
+// ========================================
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://your-vercel-app.vercel.app', // ⚠️ REPLACE WITH YOUR ACTUAL VERCEL URL
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
-/* =========================
-   Helpers
-========================= */
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('❌ Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ limit: '10mb', extended: true })); 
+
+// ========================================
+// MongoDB Connection
+// ========================================
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tutoring';
+
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// ========================================
+// MongoDB Schemas
+// ========================================
+
+const userSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  name: String,
+  email: { type: String, required: true, unique: true },
+  password: String,
+  role: String,
+  roles: [String],
+  profileImage: String,
+  bio: String,
+  subjects: [String],
+  educationLevel: String,
+  hourlyRate: Number,
+  totalHours: { type: Number, default: 0 },
+  averageRating: { type: Number, default: 0 },
+  totalReviews: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: Date,
+  emailVerified: { type: Boolean, default: true },
+  isActive: { type: Boolean, default: true }
+}, { strict: false });
+
+const bookingSchema = new mongoose.Schema({
+  bookingId: { type: String, required: true, unique: true },
+  studentId: { type: String, required: true },
+  tutorId: { type: String, required: true },
+  subject: String,
+  specificTopic: String,
+  scheduledDate: String,
+  scheduledTime: String,
+  scheduledDateTime: String,
+  duration: Number,
+  format: String,
+  location: String,
+  status: { type: String, default: 'pending' },
+  additionalNotes: String,
+  createdAt: { type: Date, default: Date.now },
+  confirmedAt: Date,
+  completedAt: Date,
+  cancelledAt: Date
+}, { strict: false });
+
+const reviewSchema = new mongoose.Schema({
+  reviewId: { type: String, required: true, unique: true },
+  bookingId: String,
+  studentId: { type: String, required: true },
+  tutorId: { type: String, required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  comment: String,
+  createdAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const helpRequestSchema = new mongoose.Schema({
+  requestId: { type: String, required: true, unique: true },
+  studentId: String,
+  studentName: String,
+  subject: String,
+  topic: String,
+  description: String,
+  urgency: String,
+  preferredFormat: String,
+  status: { type: String, default: 'open' },
+  claimedBy: String,
+  resolvedBy: String,
+  resolvedAt: Date,
+  responses: [{ type: mongoose.Schema.Types.Mixed }],
+  expiresAt: Date,
+  createdAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const messageSchema = new mongoose.Schema({
+  messageId: { type: String, required: true, unique: true },
+  senderId: { type: String, required: true },
+  receiverId: { type: String, required: true },
+  conversationId: String,
+  content: String,
+  attachments: [{ type: mongoose.Schema.Types.Mixed }],
+  sentAt: { type: Date, default: Date.now },
+  isRead: { type: Boolean, default: false },
+  readAt: Date
+}, { strict: false });
+
+const availabilitySchema = new mongoose.Schema({
+  slotId: { type: String, required: true, unique: true },
+  tutorId: { type: String, required: true },
+  date: String,
+  dayOfWeek: String,
+  startTime: String,
+  endTime: String,
+  format: String,
+  location: String,
+  isRecurring: { type: Boolean, default: false },
+  isBlocked: { type: Boolean, default: false }
+}, { strict: false });
+
+const notificationSchema = new mongoose.Schema({
+  notificationId: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
+  type: String,
+  title: String,
+  message: String,
+  actionUrl: String,
+  isRead: { type: Boolean, default: false },
+  readAt: Date,
+  createdAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+// Create Models
+const User = mongoose.model('User', userSchema);
+const Booking = mongoose.model('Booking', bookingSchema);
+const Review = mongoose.model('Review', reviewSchema);
+const HelpRequest = mongoose.model('HelpRequest', helpRequestSchema);
+const Message = mongoose.model('Message', messageSchema);
+const Availability = mongoose.model('Availability', availabilitySchema);
+const Notification = mongoose.model('Notification', notificationSchema);
+
+// ========================================
+// Helper Functions
+// ========================================
 function cryptoRandomId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
 
-function ensureId(item, idField) {
-  if (item[idField]) return item;
-  return { ...item, [idField]: cryptoRandomId() };
-}
-
-/* =========================
-   Schemas & Models
-========================= */
-
-// USERS
-const userSchema = new mongoose.Schema(
-  {
-    userId: { type: String, required: true, unique: true },
-    name: String,
-    email: { type: String, required: true },
-    passwordHash: String,
-    roles: [String],
-    subjects: [String],
-    educationLevel: String,
-    institution: String,
-    course: String,
-    year: Number,
-    gpa: Number,
-    bio: String,
-    profilePicture: String,
-    createdAt: String,
-    updatedAt: String,
-    emailVerified: Boolean,
-    isActive: Boolean,
-  },
-  { versionKey: false }
-);
-const User = mongoose.models.users || mongoose.model("users", userSchema);
-
-// BOOKINGS
-const bookingSchema = new mongoose.Schema(
-  {
-    bookingId: { type: String, required: true, unique: true },
-    studentId: String,
-    tutorId: String,
-    subject: String,
-    specificTopic: String,
-    scheduledDate: String,
-    scheduledTime: String,
-    scheduledDateTime: String,
-    duration: String,
-    format: String,
-    location: String,
-    status: String,
-    additionalNotes: String,
-    createdAt: String,
-    confirmedAt: String,
-    completedAt: String,
-    cancelledAt: String,
-  },
-  { versionKey: false }
-);
-const Booking = mongoose.models.bookings || mongoose.model("bookings", bookingSchema);
-
-// AVAILABILITY
-const availabilitySchema = new mongoose.Schema(
-  {
-    slotId: { type: String, required: true, unique: true },
-    tutorId: String,
-    date: String,
-    startTime: String,
-    endTime: String,
-    dayOfWeek: String,
-    format: String,
-    location: String,
-  },
-  { versionKey: false }
-);
-const Availability =
-  mongoose.models.availability || mongoose.model("availability", availabilitySchema);
-
-// HELP REQUESTS - ✅ FIXED: Changed from "helpRequests" to "helprequests"
-const helpRequestSchema = new mongoose.Schema(
-  {
-    requestId: { type: String, required: true, unique: true },
-    studentId: String,
-    studentName: String,
-    subject: String,
-    title: String,
-    description: String,
-    urgency: String,
-    preferredFormat: String,
-    status: String,
-    claimedBy: String,
-    expiresAt: String,
-    createdAt: String,
-  },
-  { versionKey: false }
-);
-const HelpRequest =
-  mongoose.models.helprequests || mongoose.model("helprequests", helpRequestSchema);
-
-// MESSAGES
-const messageSchema = new mongoose.Schema(
-  {
-    messageId: { type: String, required: true, unique: true },
-    senderId: String,
-    receiverId: String,
-    conversationId: String,
-    content: String,
-    sentAt: String,
-    isRead: Boolean,
-    readAt: String,
-    attachments: [String],
-  },
-  { versionKey: false }
-);
-const Message = mongoose.models.messages || mongoose.model("messages", messageSchema);
-
-// NOTIFICATIONS
-const notificationSchema = new mongoose.Schema(
-  {
-    notificationId: { type: String, required: true, unique: true },
-    userId: String,
-    title: String,
-    message: String,
-    isRead: Boolean,
-    readAt: String,
-    createdAt: String,
-  },
-  { versionKey: false }
-);
-const Notification =
-  mongoose.models.notifications || mongoose.model("notifications", notificationSchema);
-
-// REVIEWS
-const reviewSchema = new mongoose.Schema(
-  {
-    reviewId: { type: String, required: true, unique: true },
-    tutorId: String,
-    studentId: String,
-    rating: Number,
-    comment: String,
-    createdAt: String,
-    helpfulCount: { type: Number, default: 0 },
-  },
-  { versionKey: false }
-);
-const Review = mongoose.models.reviews || mongoose.model("reviews", reviewSchema);
-
-// TUTOR STATS - ✅ FIXED: Changed from "tutorStats" to "tutorstats"
-const tutorStatSchema = new mongoose.Schema({}, { strict: false, versionKey: false });
-const TutorStat =
-  mongoose.models.tutorstats || mongoose.model("tutorstats", tutorStatSchema);
-
-/* =========================
-   ROUTES
-========================= */
-
-/* ---------- USERS ---------- */
+// ========================================
+// USERS ROUTES
+// ========================================
 app.get("/api/users", async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.get("/api/users/:id", async (req, res) => {
-  try {
-    const user = await User.findOne({ userId: req.params.id });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
-  } catch (error) {
+    console.error('Error getting users:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/api/users", async (req, res) => {
   try {
-    const newUser = ensureId(
-      {
-        ...req.body,
-        createdAt: req.body.createdAt || new Date().toISOString(),
-        emailVerified: req.body.emailVerified !== undefined ? req.body.emailVerified : true,
-        isActive: req.body.isActive !== undefined ? req.body.isActive : true,
-      },
-      "userId"
-    );
-    const saved = await User.create(newUser);
-    res.status(201).json(saved);
+    const userData = {
+      ...req.body,
+      userId: req.body.userId || cryptoRandomId(),
+      createdAt: req.body.createdAt || new Date(),
+      emailVerified: req.body.emailVerified ?? true,
+      isActive: req.body.isActive ?? true
+    };
+
+    const newUser = new User(userData);
+    await newUser.save();
+    res.status(201).json(newUser);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating user:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
 app.post("/api/users/login", async (req, res) => {
   try {
-    const { email } = req.body || {};
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    console.log('\n🔍 ===== LOGIN ATTEMPT =====');
+    console.log('📨 Request body:', req.body);
+    
+    const { email, password } = req.body || {};
+    
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    
+    const user = await User.findOne({ email: email.trim() });
+    
+    console.log('✅ User found:', user ? 'YES - ' + user.name : 'NO');
+    console.log('===== END LOGIN ATTEMPT =====\n');
+    
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // In production, you should verify password hash here
     res.json(user);
   } catch (error) {
+    console.error('Error during login:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.put("/api/users/:id", async (req, res) => {
   try {
-    const updated = await User.findOneAndUpdate(
+    const user = await User.findOneAndUpdate(
       { userId: req.params.id },
-      { ...req.body, updatedAt: new Date().toISOString() },
+      { ...req.body, updatedAt: new Date() },
       { new: true }
     );
-    if (!updated) return res.status(404).json({ message: "User not found" });
-    res.json(updated);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating user:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-/* ---------- BOOKINGS ---------- */
+// ========================================
+// BOOKINGS ROUTES
+// ========================================
 app.get("/api/bookings", async (req, res) => {
   try {
-    res.json(await Booking.find());
+    const bookings = await Booking.find();
+    res.json(bookings);
   } catch (error) {
+    console.error('Error getting bookings:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -283,6 +277,7 @@ app.get("/api/bookings/student/:studentId", async (req, res) => {
     const bookings = await Booking.find({ studentId: req.params.studentId });
     res.json(bookings);
   } catch (error) {
+    console.error('Error getting student bookings:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -292,213 +287,67 @@ app.get("/api/bookings/tutor/:tutorId", async (req, res) => {
     const bookings = await Booking.find({ tutorId: req.params.tutorId });
     res.json(bookings);
   } catch (error) {
+    console.error('Error getting tutor bookings:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/api/bookings", async (req, res) => {
   try {
-    const booking = ensureId({
+    const bookingData = {
       ...req.body,
-      createdAt: req.body.createdAt || new Date().toISOString(),
-    }, "bookingId");
-    res.status(201).json(await Booking.create(booking));
+      bookingId: req.body.bookingId || cryptoRandomId(),
+      status: req.body.status || 'pending',
+      createdAt: req.body.createdAt || new Date()
+    };
+
+    const newBooking = new Booking(bookingData);
+    await newBooking.save();
+    res.status(201).json(newBooking);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating booking:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-app.put("/api/bookings/:id", async (req, res) => {
+app.put("/api/bookings/:bookingId", async (req, res) => {
   try {
-    const updated = await Booking.findOneAndUpdate(
-      { bookingId: req.params.id },
+    const booking = await Booking.findOneAndUpdate(
+      { bookingId: req.params.bookingId },
       req.body,
       { new: true }
     );
-    if (!updated) return res.status(404).json({ message: "Booking not found" });
-    res.json(updated);
+    
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    
+    res.json(booking);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating booking:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-/* ---------- AVAILABILITY ---------- */
-app.get("/api/availability", async (req, res) => {
+app.delete("/api/bookings/:bookingId", async (req, res) => {
   try {
-    res.json(await Availability.find());
+    await Booking.findOneAndDelete({ bookingId: req.params.bookingId });
+    res.json({ ok: true });
   } catch (error) {
+    console.error('Error deleting booking:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-app.get("/api/availability/tutor/:tutorId", async (req, res) => {
-  try {
-    const slots = await Availability.find({ tutorId: req.params.tutorId });
-    res.json(slots);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.post("/api/availability", async (req, res) => {
-  try {
-    const slot = ensureId(req.body, "slotId");
-    res.status(201).json(await Availability.create(slot));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.delete("/api/availability/:id", async (req, res) => {
-  try {
-    const deleted = await Availability.findOneAndDelete({ slotId: req.params.id });
-    if (!deleted) return res.status(404).json({ message: "Slot not found" });
-    res.json({ message: "Slot deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/* ---------- HELP REQUESTS ---------- */
-app.get("/api/helprequests", async (req, res) => {
-  try {
-    res.json(await HelpRequest.find());
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.get("/api/helprequests/student/:studentId", async (req, res) => {
-  try {
-    const requests = await HelpRequest.find({ studentId: req.params.studentId });
-    res.json(requests);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.post("/api/helprequests", async (req, res) => {
-  try {
-    const reqItem = ensureId({
-      ...req.body,
-      createdAt: req.body.createdAt || new Date().toISOString(),
-    }, "requestId");
-    res.status(201).json(await HelpRequest.create(reqItem));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.put("/api/helprequests/:id", async (req, res) => {
-  try {
-    const updated = await HelpRequest.findOneAndUpdate(
-      { requestId: req.params.id },
-      req.body,
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ message: "Request not found" });
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.delete("/api/helprequests/:id", async (req, res) => {
-  try {
-    const deleted = await HelpRequest.findOneAndDelete({ requestId: req.params.id });
-    if (!deleted) return res.status(404).json({ message: "Request not found" });
-    res.json({ message: "Request deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/* ---------- MESSAGES ---------- */
-app.get("/api/messages", async (req, res) => {
-  try {
-    res.json(await Message.find());
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Get conversation between two users (query params)
-app.get("/api/messages/conversation", async (req, res) => {
-  try {
-    const { userId1, userId2 } = req.query;
-    const messages = await Message.find({
-      $or: [
-        { senderId: userId1, receiverId: userId2 },
-        { senderId: userId2, receiverId: userId1 }
-      ]
-    }).sort({ sentAt: 1 });
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.get("/api/messages/user/:userId", async (req, res) => {
-  try {
-    const messages = await Message.find({
-      $or: [
-        { senderId: req.params.userId },
-        { receiverId: req.params.userId }
-      ]
-    });
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.post("/api/messages", async (req, res) => {
-  try {
-    const msg = ensureId({
-      ...req.body,
-      sentAt: req.body.sentAt || new Date().toISOString(),
-      isRead: req.body.isRead !== undefined ? req.body.isRead : false,
-    }, "messageId");
-    res.status(201).json(await Message.create(msg));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.put("/api/messages/:id", async (req, res) => {
-  try {
-    const updated = await Message.findOneAndUpdate(
-      { messageId: req.params.id },
-      req.body,
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ message: "Message not found" });
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Mark message as read
-app.put("/api/messages/:id/read", async (req, res) => {
-  try {
-    const updated = await Message.findOneAndUpdate(
-      { messageId: req.params.id },
-      { isRead: true, readAt: new Date().toISOString() },
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ message: "Message not found" });
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/* ---------- REVIEWS ---------- */
+// ========================================
+// REVIEWS ROUTES
+// ========================================
 app.get("/api/reviews", async (req, res) => {
   try {
-    res.json(await Review.find());
+    const reviews = await Review.find();
+    res.json(reviews);
   } catch (error) {
+    console.error('Error getting reviews:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -508,152 +357,349 @@ app.get("/api/reviews/tutor/:tutorId", async (req, res) => {
     const reviews = await Review.find({ tutorId: req.params.tutorId });
     res.json(reviews);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-app.get("/api/reviews/student/:studentId", async (req, res) => {
-  try {
-    const reviews = await Review.find({ studentId: req.params.studentId });
-    res.json(reviews);
-  } catch (error) {
+    console.error('Error getting tutor reviews:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/api/reviews", async (req, res) => {
   try {
-    const review = ensureId({
+    console.log('📝 Creating review with data:', req.body);
+    
+    const reviewData = {
       ...req.body,
-      createdAt: req.body.createdAt || new Date().toISOString(),
-      helpfulCount: 0,
-    }, "reviewId");
-    res.status(201).json(await Review.create(review));
+      reviewId: req.body.reviewId || cryptoRandomId(),
+      createdAt: req.body.createdAt || new Date()
+    };
+
+    const newReview = new Review(reviewData);
+    await newReview.save();
+    
+    console.log('✅ Review created:', newReview);
+    res.status(201).json(newReview);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Error creating review:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-// Mark review as helpful
-app.put("/api/reviews/:id/helpful", async (req, res) => {
+// ========================================
+// HELP REQUESTS ROUTES
+// ========================================
+app.get("/api/helprequests", async (req, res) => {
   try {
-    const review = await Review.findOne({ reviewId: req.params.id });
-    if (!review) return res.status(404).json({ message: "Review not found" });
-    
-    review.helpfulCount = (review.helpfulCount || 0) + 1;
-    await review.save();
-    
-    res.json(review);
+    const requests = await HelpRequest.find();
+    res.json(requests);
   } catch (error) {
+    console.error('Error getting help requests:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/* ---------- NOTIFICATIONS ---------- */
+app.post("/api/helprequests", async (req, res) => {
+  try {
+    const requestData = {
+      ...req.body,
+      requestId: req.body.requestId || cryptoRandomId()
+    };
+
+    const newRequest = new HelpRequest(requestData);
+    await newRequest.save();
+    res.status(201).json(newRequest);
+  } catch (error) {
+    console.error('Error creating help request:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.put("/api/helprequests/:requestId", async (req, res) => {
+  try {
+    const request = await HelpRequest.findOneAndUpdate(
+      { requestId: req.params.requestId },
+      req.body,
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+    
+    res.json(request);
+  } catch (error) {
+    console.error('Error updating help request:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete("/api/helprequests/:requestId", async (req, res) => {
+  try {
+    await HelpRequest.findOneAndDelete({ requestId: req.params.requestId });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error deleting help request:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========================================
+// MESSAGES ROUTES
+// ========================================
+app.get("/api/messages", async (req, res) => {
+  try {
+    const messages = await Message.find();
+    res.json(messages);
+  } catch (error) {
+    console.error('Error getting messages:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/api/messages/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const messages = await Message.find({
+      $or: [{ senderId: userId }, { receiverId: userId }]
+    });
+    
+    const conversations = {};
+    
+    messages.forEach((msg) => {
+      const otherUserId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      const ids = [userId, otherUserId].sort();
+      const convId = `conv_${ids[0]}_${ids[1]}`;
+      
+      if (!conversations[convId]) {
+        conversations[convId] = [];
+      }
+      conversations[convId].push(msg);
+    });
+    
+    Object.keys(conversations).forEach((convId) => {
+      conversations[convId].sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
+    });
+    
+    res.json(conversations);
+  } catch (error) {
+    console.error('Error getting user messages:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/api/messages/conversation", async (req, res) => {
+  try {
+    const { userId1, userId2 } = req.query;
+    const messages = await Message.find({
+      $or: [
+        { senderId: userId1, receiverId: userId2 },
+        { senderId: userId2, receiverId: userId1 }
+      ]
+    }).sort({ sentAt: 1 });
+    
+    res.json(messages);
+  } catch (error) {
+    console.error('Error getting conversation:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/api/messages", async (req, res) => {
+  try {
+    const messageData = {
+      ...req.body,
+      messageId: req.body.messageId || cryptoRandomId(),
+      sentAt: req.body.sentAt || new Date(),
+      isRead: req.body.isRead ?? false
+    };
+
+    const newMessage = new Message(messageData);
+    await newMessage.save();
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error creating message:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.put("/api/messages/:messageId/read", async (req, res) => {
+  try {
+    const message = await Message.findOneAndUpdate(
+      { messageId: req.params.messageId },
+      { isRead: true, readAt: new Date() },
+      { new: true }
+    );
+    
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+    
+    res.json(message);
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// ========================================
+// AVAILABILITY ROUTES
+// ========================================
+app.get("/api/availability", async (req, res) => {
+  try {
+    const slots = await Availability.find();
+    res.json(slots);
+  } catch (error) {
+    console.error('Error getting availability:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/api/availability/tutor/:tutorId", async (req, res) => {
+  try {
+    const slots = await Availability.find({ tutorId: req.params.tutorId });
+    res.json(slots);
+  } catch (error) {
+    console.error('Error getting tutor availability:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/api/availability", async (req, res) => {
+  try {
+    console.log('🔥 POST /api/availability - Received:', req.body);
+    
+    const slotData = {
+      ...req.body,
+      slotId: req.body.slotId || cryptoRandomId()
+    };
+
+    const newSlot = new Availability(slotData);
+    await newSlot.save();
+    
+    console.log('✨ Created slot:', newSlot);
+    res.status(201).json(newSlot);
+  } catch (error) {
+    console.error('Error creating availability:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete("/api/availability/:slotId", async (req, res) => {
+  try {
+    await Availability.findOneAndDelete({ slotId: req.params.slotId });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error deleting availability:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========================================
+// NOTIFICATIONS ROUTES
+// ========================================
 app.get("/api/notifications", async (req, res) => {
   try {
-    res.json(await Notification.find());
+    const notifications = await Notification.find();
+    res.json(notifications);
   } catch (error) {
+    console.error('Error getting notifications:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.get("/api/notifications/user/:userId", async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.params.userId })
-      .sort({ createdAt: -1 });
+    const notifications = await Notification.find({ userId: req.params.userId });
     res.json(notifications);
   } catch (error) {
+    console.error('Error getting user notifications:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/api/notifications", async (req, res) => {
   try {
-    const notif = ensureId({
+    const notifData = {
       ...req.body,
-      createdAt: req.body.createdAt || new Date().toISOString(),
-      isRead: req.body.isRead !== undefined ? req.body.isRead : false,
-    }, "notificationId");
-    res.status(201).json(await Notification.create(notif));
+      notificationId: req.body.notificationId || cryptoRandomId()
+    };
+
+    const newNotif = new Notification(notifData);
+    await newNotif.save();
+    res.status(201).json(newNotif);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating notification:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-app.put("/api/notifications/:id", async (req, res) => {
+app.put("/api/notifications/:notificationId", async (req, res) => {
   try {
-    const updated = await Notification.findOneAndUpdate(
-      { notificationId: req.params.id },
+    const notification = await Notification.findOneAndUpdate(
+      { notificationId: req.params.notificationId },
       req.body,
       { new: true }
     );
-    if (!updated) return res.status(404).json({ message: "Notification not found" });
-    res.json(updated);
+    
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+    
+    res.json(notification);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating notification:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
-app.delete("/api/notifications/:id", async (req, res) => {
+app.put("/api/notifications/user/:userId/mark-all-read", async (req, res) => {
   try {
-    const deleted = await Notification.findOneAndDelete({ notificationId: req.params.id });
-    if (!deleted) return res.status(404).json({ message: "Notification not found" });
-    res.json({ message: "Notification deleted successfully" });
+    const result = await Notification.updateMany(
+      { userId: req.params.userId, isRead: false },
+      { isRead: true, readAt: new Date() }
+    );
+    
+    res.json({ success: true, count: result.modifiedCount });
   } catch (error) {
+    console.error('Error marking all as read:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/* ---------- TUTOR STATS ---------- */
+app.delete("/api/notifications/:notificationId", async (req, res) => {
+  try {
+    const result = await Notification.findOneAndDelete({ 
+      notificationId: req.params.notificationId 
+    });
+    
+    if (!result) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+    
+    res.json({ message: "Notification deleted", notificationId: req.params.notificationId });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========================================
+// TUTOR STATS ROUTES
+// ========================================
 app.get("/api/tutorstats", async (req, res) => {
   try {
-    res.json(await TutorStat.find());
+    // Return empty array as stats are computed dynamically
+    res.json([]);
   } catch (error) {
+    console.error('Error getting tutor stats:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-app.get("/api/tutorstats/:tutorId", async (req, res) => {
-  try {
-    const stats = await TutorStat.findOne({ tutorId: req.params.tutorId });
-    if (!stats) {
-      return res.json({
-        tutorId: req.params.tutorId,
-        totalSessions: 0,
-        averageRating: 0,
-        totalEarnings: 0
-      });
-    }
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/* =========================
-   ERROR HANDLERS
-========================= */
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    message: `Cannot ${req.method} ${req.url}`,
-    error: 'Route not found'
-  });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({ 
-    message: err.message || 'Internal server error'
-  });
-});
-
-/* =========================
-   START SERVER
-========================= */
+// ========================================
+// START SERVER
+// ========================================
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Allowed origins:`, allowedOrigins);
 });

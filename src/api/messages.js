@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/messages.js
+// REPLACE: Your existing src/api/messages.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const messagesApi = {
   async getAll() {

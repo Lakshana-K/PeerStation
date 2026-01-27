@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import { API_URL } from './config';
 
 export const usersApi = {
   async getAll() {
@@ -20,7 +20,7 @@ export const usersApi = {
   async getByRole(role) {
     const response = await fetch(`${API_URL}/users`);
     const users = await response.json();
-    const filtered = users.filter(u => u.roles.includes(role));
+    const filtered = users.filter(u => u.roles?.includes(role) || u.role === role);
     return {
       data: filtered,
       status: 200,
@@ -74,11 +74,11 @@ export const usersApi = {
   async search(filters = {}) {
     const response = await fetch(`${API_URL}/users`);
     let users = await response.json();
-    users = users.filter(u => u.roles.includes('tutor'));
+    users = users.filter(u => u.roles?.includes('tutor') || u.role === 'tutor');
 
     if (filters.subject) {
       users = users.filter(u => 
-        u.subjects.some(s => s.toLowerCase().includes(filters.subject.toLowerCase()))
+        u.subjects?.some(s => s.toLowerCase().includes(filters.subject.toLowerCase()))
       );
     }
 

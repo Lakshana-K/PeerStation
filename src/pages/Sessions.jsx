@@ -123,18 +123,57 @@ export default function Sessions() {
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
 
+    // CRITICAL FIX: Add validation checks
+    if (!user || !user.userId) {
+      console.error('❌ User data is missing:', user);
+      alert('Error: User information is not available. Please try logging in again.');
+      return;
+    }
+
+    if (!selectedBooking) {
+      console.error('❌ No booking selected');
+      alert('Error: No session selected for review.');
+      return;
+    }
+
+    // Get the tutor ID - handle both direct tutorId and nested otherUser
+    let tutorId;
+    if (selectedBooking.isStudent) {
+      // If current user is student, the tutor is either in otherUser or tutorId
+      tutorId = selectedBooking.otherUser?.userId || selectedBooking.tutorId;
+    } else {
+      // This shouldn't happen as only students can leave reviews, but just in case
+      tutorId = selectedBooking.tutorId;
+    }
+
+    if (!tutorId) {
+      console.error('❌ Tutor ID is missing from booking:', selectedBooking);
+      alert('Error: Tutor information is missing. Please try again.');
+      return;
+    }
+
+    console.log('📝 Submitting review with data:', {
+      bookingId: selectedBooking.bookingId,
+      tutorId: tutorId,
+      studentId: user.userId,
+      rating: reviewData.rating,
+      comment: reviewData.comment
+    });
+
     try {
-      await api.reviews.create({
+      const reviewPayload = {
         bookingId: selectedBooking.bookingId,
-        tutorId: selectedBooking.otherUser.userId,
+        tutorId: tutorId,
         studentId: user.userId,
         rating: reviewData.rating,
         comment: reviewData.comment,
         createdAt: new Date().toISOString()
-      });
+      };
+
+      await api.reviews.create(reviewPayload);
 
       // 🔔 Notify the tutor about the review
-      await createNotification(selectedBooking.otherUser.userId, 'NEW_REVIEW', {
+      await createNotification(tutorId, 'NEW_REVIEW', {
         studentName: user.name,
         rating: reviewData.rating
       });
@@ -145,8 +184,9 @@ export default function Sessions() {
 
       alert('Review submitted successfully!');
     } catch (error) {
-      console.error('Error submitting review:', error);
-      alert('Failed to submit review');
+      console.error('❌ Error submitting review:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      alert(`Failed to submit review: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -183,290 +223,229 @@ export default function Sessions() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">My Sessions</h1>
-          <p className="text-gray-600 text-lg">View and manage all your tutoring sessions</p>
+          <p className="text-gray-600">Manage your tutoring sessions</p>
         </div>
 
         {/* Role Toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex bg-gray-100 rounded-full p-1.5">
+        {user.role === 'tutor' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-6 inline-flex">
             <button
-              onClick={() => {
-                setRoleView('student');
-                setFilter('all');
-              }}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+              onClick={() => setRoleView('student')}
+              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 roleView === 'student'
-                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md transform scale-105'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <span className="text-xl">🎓</span>
-              <span>I'm Learning</span>
+              As Student
             </button>
             <button
-              onClick={() => {
-                setRoleView('tutor');
-                setFilter('all');
-              }}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+              onClick={() => setRoleView('tutor')}
+              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 roleView === 'tutor'
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md transform scale-105'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <span className="text-xl">👨‍🏫</span>
-              <span>I'm Teaching</span>
+              As Tutor
             </button>
           </div>
-        </div>
+        )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className={`bg-white rounded-xl p-5 transition-all ${
-            counts.all === 0 ? 'opacity-50' : 'shadow-sm hover:shadow-md'
-          }`}>
-            <div className={`text-4xl font-bold mb-1 bg-gradient-to-r ${
-              roleView === 'student' ? 'from-indigo-600 to-indigo-800' : 'from-green-600 to-green-800'
-            } bg-clip-text text-transparent`}>
-              {counts.all}
-            </div>
-            <div className="text-xs font-semibold text-gray-500 tracking-wide">Total</div>
-          </div>
-
-          <div className={`bg-white rounded-xl p-5 transition-all ${
-            counts.upcoming === 0
-              ? 'opacity-50'
-              : 'shadow-md hover:shadow-lg border-2 border-blue-100 transform hover:scale-105'
-          }`}>
-            <div className="text-4xl font-bold text-blue-600 mb-1">{counts.upcoming}</div>
-            <div className="text-xs font-semibold text-gray-500 tracking-wide">Upcoming</div>
-          </div>
-
-          <div className={`bg-white rounded-xl p-5 transition-all ${
-            counts.completed === 0 ? 'opacity-50' : 'shadow-sm hover:shadow-md'
-          }`}>
-            <div className="text-4xl font-bold text-green-600 mb-1">{counts.completed}</div>
-            <div className="text-xs font-semibold text-gray-500 tracking-wide">Completed</div>
-          </div>
-
-          <div className={`bg-white rounded-xl p-5 transition-all ${
-            counts.cancelled === 0 ? 'opacity-40' : 'opacity-70 hover:opacity-100'
-          }`}>
-            <div className="text-4xl font-bold text-red-400 mb-1">{counts.cancelled}</div>
-            <div className="text-xs font-semibold text-gray-400 tracking-wide">Cancelled</div>
-          </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex gap-2 mb-8 bg-white rounded-lg p-1.5 shadow-sm border border-gray-200 overflow-x-auto">
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-8 inline-flex">
           {[
-            { key: 'all', label: 'All', icon: '📚' },
-            { key: 'upcoming', label: 'Upcoming', icon: '🔜' },
-            { key: 'completed', label: 'Completed', icon: '✅' },
-            { key: 'cancelled', label: 'Cancelled', icon: '❌' }
-          ].map(({ key, label, icon }) => (
+            { key: 'all', label: `All (${counts.all})` },
+            { key: 'upcoming', label: `Upcoming (${counts.upcoming})` },
+            { key: 'completed', label: `Completed (${counts.completed})` },
+            { key: 'cancelled', label: `Cancelled (${counts.cancelled})` }
+          ].map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold whitespace-nowrap transition-all ${
+              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 filter === key
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <span>{icon}</span>
-              <span>{label}</span>
-              {counts[key] > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  filter === key ? 'bg-white/20' : 'bg-gray-100'
-                }`}>
-                  {counts[key]}
-                </span>
-              )}
+              {label}
             </button>
           ))}
         </div>
 
-        {/* Sessions List */}
         {filteredBookings.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-16 text-center">
-            <div className="text-8xl mb-6">📭</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">No sessions found</h3>
-            <p className="text-gray-600 text-lg mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="text-6xl mb-4">📚</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No sessions found</h2>
+            <p className="text-gray-600 mb-6">
               {filter === 'all'
-                ? roleView === 'student'
-                  ? "You haven't booked any sessions yet"
-                  : "You haven't hosted any sessions yet"
-                : `No ${filter} sessions at the moment`
-              }
+                ? `You don't have any sessions ${roleView === 'student' ? 'as a student' : 'as a tutor'} yet.`
+                : `No ${filter} sessions found ${roleView === 'student' ? 'as a student' : 'as a tutor'}.`}
             </p>
-            {filter === 'all' && roleView === 'student' && (
-              <Button onClick={() => navigate('/tutors')} size="lg">
-                Find Tutors
+            {roleView === 'student' && (
+              <Button onClick={() => navigate('/tutors')}>
+                Find a Tutor
               </Button>
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredBookings.map((booking) => {
-              const dateTimeStr = `${booking.scheduledDate}T${booking.scheduledTime}`;
-              const date = new Date(dateTimeStr);
-
-              const dateStr = !isNaN(date) ? date.toLocaleDateString('en-US', {
+              const sessionDate = new Date(`${booking.scheduledDate}T${booking.scheduledTime}`);
+              const dateStr = sessionDate.toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
-              }) : 'Invalid Date';
-
-              const timeStr = !isNaN(date) ? date.toLocaleTimeString('en-US', {
+              });
+              const timeStr = sessionDate.toLocaleTimeString('en-US', {
                 hour: 'numeric',
-                minute: '2-digit'
-              }) : 'Invalid Time';
+                minute: '2-digit',
+                hour12: true
+              });
 
-              const dateTime = new Date(`${booking.scheduledDate}T${booking.scheduledTime}`);
-              const canCancel = ['upcoming', 'pending', 'confirmed'].includes(booking.status) && dateTime > new Date();
-              const canReview = booking.status === 'completed' && booking.isStudent && !booking.hasReviewed;
-              const canComplete = ['upcoming', 'pending', 'confirmed'].includes(booking.status) && dateTime < new Date() && !booking.isStudent;
+              // Determine what actions are available
+              const isPast = sessionDate < new Date();
+              const isUpcoming = !isPast && ['upcoming', 'pending', 'confirmed'].includes(booking.status);
+              const isCompleted = booking.status === 'completed';
+              const isCancelled = booking.status === 'cancelled';
 
-              const accentColor =
-                booking.status === 'completed' ? 'bg-green-500' :
-                ['upcoming', 'pending', 'confirmed'].includes(booking.status) ? 'bg-blue-500' :
-                'bg-red-500';
+              const canCancel = isUpcoming && !isCancelled;
+              const canComplete = booking.isTutor && isUpcoming;
+              const canReview = booking.isStudent && isCompleted && !booking.hasReviewed;
 
               return (
                 <div
                   key={booking.bookingId}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="flex">
-                    <div className={`w-1.5 ${accentColor}`}></div>
-                    <div className="flex-1 p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-4 flex-1">
-                          <img
-                            src={booking.otherUser?.profilePicture || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff'}
-                            alt={booking.otherUser?.name}
-                            className="w-14 h-14 rounded-xl"
-                          />
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 mb-0.5">
-                              {booking.subject} <span className="text-gray-300">•</span> {booking.specificTopic}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-semibold text-indigo-600">{booking.otherUser?.name}</span>
-                              <span className="text-gray-400 mx-1.5">•</span>
-                              <span className="text-gray-500">{roleView === 'student' ? 'Tutor' : 'Student'}</span>
-                            </p>
-                          </div>
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xl font-bold">
+                            {booking.otherUser?.name?.[0]?.toUpperCase() || '?'}
+                          </span>
                         </div>
-
-                        <span className={`px-3 py-1 rounded-lg font-semibold text-xs capitalize ${
-                          booking.status === 'completed' ? 'bg-green-100 text-green-700' :
-                          ['upcoming', 'pending', 'confirmed'].includes(booking.status) ? 'bg-blue-100 text-blue-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {['pending', 'confirmed'].includes(booking.status) ? 'Upcoming' : booking.status}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-3 mb-4 text-sm">
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="font-medium">{dateStr}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-medium">{timeStr}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-indigo-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-semibold">{booking.duration} mins</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          </svg>
-                          <span className="font-medium">{booking.format}</span>
-                        </div>
-                      </div>
-
-                      {canReview && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-xl">⭐</span>
-                            <p className="text-sm font-semibold text-yellow-900">
-                              Help others by leaving a review!
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {booking.hasReviewed && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                          <div className="flex items-center gap-2.5">
-                            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-sm font-semibold text-green-900">Review submitted</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {booking.additionalNotes && (
-                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Notes:</span> {booking.additionalNotes}
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900 mb-0.5">
+                            {booking.subject} <span className="text-gray-300">•</span> {booking.specificTopic}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-semibold text-indigo-600">{booking.otherUser?.name || 'Unknown User'}</span>
+                            <span className="text-gray-400 mx-1.5">•</span>
+                            <span className="text-gray-500">{roleView === 'student' ? 'Tutor' : 'Student'}</span>
                           </p>
                         </div>
+                      </div>
+
+                      <span className={`px-3 py-1 rounded-lg font-semibold text-xs capitalize ${
+                        booking.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        ['upcoming', 'pending', 'confirmed'].includes(booking.status) ? 'bg-blue-100 text-blue-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {['pending', 'confirmed'].includes(booking.status) ? 'Upcoming' : booking.status}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 mb-4 text-sm">
+                      <div className="flex items-center gap-1.5 text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="font-medium">{dateStr}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium">{timeStr}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-indigo-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-semibold">{booking.duration} mins</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        <span className="font-medium">{booking.format}</span>
+                      </div>
+                    </div>
+
+                    {canReview && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">⭐</span>
+                          <p className="text-sm font-semibold text-yellow-900">
+                            Help others by leaving a review!
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {booking.hasReviewed && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2.5">
+                          <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <p className="text-sm font-semibold text-green-900">Review submitted</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {booking.additionalNotes && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold">Notes:</span> {booking.additionalNotes}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/profile/${booking.otherUser?.userId}`)}
+                        disabled={!booking.otherUser?.userId}
+                      >
+                        View Profile
+                      </Button>
+
+                      {canCancel && (
+                        <button
+                          onClick={() => handleCancelBooking(booking.bookingId)}
+                          className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg font-semibold text-sm hover:bg-red-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
                       )}
 
-                      <div className="flex gap-2">
+                      {canComplete && (
                         <Button
-                          variant="secondary"
                           size="sm"
-                          onClick={() => navigate(`/profile/${booking.otherUser?.userId}`)}
+                          onClick={() => handleCompleteSession(booking.bookingId)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
                         >
-                          View Profile
+                          ✓ Mark Complete
                         </Button>
+                      )}
 
-                        {canCancel && (
-                          <button
-                            onClick={() => handleCancelBooking(booking.bookingId)}
-                            className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg font-semibold text-sm hover:bg-red-50 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        )}
-
-                        {canComplete && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleCompleteSession(booking.bookingId)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            ✓ Mark Complete
-                          </Button>
-                        )}
-
-                        {canReview && (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setSelectedBooking(booking);
-                              setShowReviewModal(true);
-                            }}
-                          >
-                            Leave Review
-                          </Button>
-                        )}
-                      </div>
+                      {canReview && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setShowReviewModal(true);
+                          }}
+                        >
+                          Leave Review
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

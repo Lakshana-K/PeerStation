@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/helpRequests.js
+// REPLACE: Your existing src/api/helpRequests.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const helpRequestsApi = {
   async getAll() {

@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// ========================================
+// FILE: src/api/httpClient.js
+// REPLACE: Your existing src/api/httpClient.js
+// ========================================
+
+import { API_URL } from './config';
 
 export const httpClient = {
   async get(endpoint) {
