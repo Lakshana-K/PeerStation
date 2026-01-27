@@ -1,6 +1,6 @@
 // ========================================
 // FILE: server/server.js
-// FIXED: Now supports all Vercel preview URL
+// SIMPLIFIED: Direct check for Vercel domains
 // ========================================
 
 import express from "express";
@@ -13,29 +13,27 @@ dotenv.config();
 const app = express();
 
 // ========================================
-// CORS Configuration
+// CORS Configuration - SIMPLIFIED
 // ========================================
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://peer-station.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
-
-// Function to check if origin is a Vercel deployment
-const isVercelDeployment = (origin) => {
-  if (!origin) return false;
-  return origin.includes('.vercel.app');
-};
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
-    // Check if origin is in allowedOrigins OR is a Vercel deployment
-    if (allowedOrigins.indexOf(origin) !== -1 || isVercelDeployment(origin)) {
+    // Allow ALL Vercel deployments (main + preview)
+    if (origin && origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Check other allowed origins
+    if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log('❌ Blocked by CORS:', origin);
@@ -705,5 +703,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Allowed origins:`, allowedOrigins);
+  console.log(`✅ Vercel wildcard enabled: *.vercel.app`);
 });
-
