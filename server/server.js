@@ -1,6 +1,6 @@
 // ========================================
 // FILE: server/server.js
-// FIXED: Now supports all Vercel preview URLs
+// FIXED: Now supports all Vercel preview URL
 // ========================================
 
 import express from "express";
