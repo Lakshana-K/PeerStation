@@ -1,7 +1,6 @@
 // ========================================
 // FILE: server/server.js
-// REPLACE: Your existing server/server.js
-// ⚠️ IMPORTANT: Update line 14 with your Vercel URL
+// FIXED: Now supports all Vercel preview URLs
 // ========================================
 
 import express from "express";
@@ -15,22 +14,28 @@ const app = express();
 
 // ========================================
 // CORS Configuration
-// ⚠️ UPDATE LINE 14 WITH YOUR VERCEL URL
 // ========================================
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://peer-station.vercel.app/', // ⚠️ REPLACE WITH YOUR ACTUAL VERCEL URL
+  'https://peer-station.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
+
+// Function to check if origin is a Vercel deployment
+const isVercelDeployment = (origin) => {
+  if (!origin) return false;
+  return origin.includes('.vercel.app');
+};
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if origin is in allowedOrigins OR is a Vercel deployment
+    if (allowedOrigins.indexOf(origin) !== -1 || isVercelDeployment(origin)) {
       callback(null, true);
     } else {
       console.log('❌ Blocked by CORS:', origin);
@@ -232,7 +237,6 @@ app.post("/api/users/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // In production, you should verify password hash here
     res.json(user);
   } catch (error) {
     console.error('Error during login:', error);
@@ -686,7 +690,6 @@ app.delete("/api/notifications/:notificationId", async (req, res) => {
 // ========================================
 app.get("/api/tutorstats", async (req, res) => {
   try {
-    // Return empty array as stats are computed dynamically
     res.json([]);
   } catch (error) {
     console.error('Error getting tutor stats:', error);
