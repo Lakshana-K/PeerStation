@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { createNotification } from '../utils/notificationHelper';
@@ -8,8 +7,8 @@ import Loading from '../components/common/Loading';
 import Modal from '../components/common/Modal';
 
 export default function Sessions() {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('currentUser'));
   const [bookings, setBookings] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -226,8 +225,8 @@ export default function Sessions() {
           <p className="text-gray-600">Manage your tutoring sessions</p>
         </div>
 
-        {/* Role Toggle */}
-        {user.role === 'tutor' && (
+        {/* Role Toggle - Always visible since all users are both student and tutor */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-6 inline-flex">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-6 inline-flex">
             <button
               onClick={() => setRoleView('student')}
@@ -250,7 +249,7 @@ export default function Sessions() {
               As Tutor
             </button>
           </div>
-        )}
+        </div>
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-8 inline-flex">
