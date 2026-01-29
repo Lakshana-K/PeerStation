@@ -35,7 +35,6 @@ export default function Sessions() {
         b => b.studentId === user.userId || b.tutorId === user.userId
       );
 
-      // Load reviews from API to check which bookings have been reviewed
       const allReviewsResponse = await api.reviews.getAll();
       const allReviews = allReviewsResponse.data || [];
 
@@ -57,7 +56,6 @@ export default function Sessions() {
         };
       });
 
-      // Sort by date (newest first)
       bookingsWithInfo.sort((a, b) => {
         const dateA = new Date(`${a.scheduledDate}T${a.scheduledTime}`);
         const dateB = new Date(`${b.scheduledDate}T${b.scheduledTime}`);
@@ -77,10 +75,8 @@ export default function Sessions() {
 
     try {
       const booking = bookings.find(b => b.bookingId === bookingId);
-
       await api.bookings.update(bookingId, { status: 'cancelled' });
 
-      // 🔔 Notify the other person
       const otherUserId = booking.isStudent ? booking.tutorId : booking.studentId;
       await createNotification(otherUserId, 'SESSION_CANCELLED', {
         subject: booking.subject,
@@ -103,10 +99,8 @@ export default function Sessions() {
 
     try {
       const booking = bookings.find(b => b.bookingId === bookingId);
-
       await api.bookings.update(bookingId, { status: 'completed' });
 
-      // 🔔 Notify the student
       await createNotification(booking.studentId, 'SESSION_COMPLETED', {
         subject: booking.subject
       });
@@ -122,7 +116,6 @@ export default function Sessions() {
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
 
-    // CRITICAL FIX: Add validation checks
     if (!user || !user.userId) {
       console.error('❌ User data is missing:', user);
       alert('Error: User information is not available. Please try logging in again.');
@@ -135,13 +128,10 @@ export default function Sessions() {
       return;
     }
 
-    // Get the tutor ID - handle both direct tutorId and nested otherUser
     let tutorId;
     if (selectedBooking.isStudent) {
-      // If current user is student, the tutor is either in otherUser or tutorId
       tutorId = selectedBooking.otherUser?.userId || selectedBooking.tutorId;
     } else {
-      // This shouldn't happen as only students can leave reviews, but just in case
       tutorId = selectedBooking.tutorId;
     }
 
@@ -171,7 +161,6 @@ export default function Sessions() {
 
       await api.reviews.create(reviewPayload);
 
-      // 🔔 Notify the tutor about the review
       await createNotification(tutorId, 'NEW_REVIEW', {
         studentName: user.name,
         rating: reviewData.rating
@@ -191,12 +180,10 @@ export default function Sessions() {
 
   if (loading) return <Loading text="Loading sessions..." />;
 
-  // Filter by role first
   const roleFilteredBookings = bookings.filter(b =>
     roleView === 'student' ? b.isStudent : b.isTutor
   );
 
-  // Then filter by status
   const filteredBookings = filter === 'all'
     ? roleFilteredBookings
     : filter === 'upcoming'
@@ -206,7 +193,6 @@ export default function Sessions() {
         })
       : roleFilteredBookings.filter(b => b.status === filter);
 
-  // Calculate counts based on role view
   const counts = {
     all: roleFilteredBookings.length,
     completed: roleFilteredBookings.filter(b => b.status === 'completed').length,
@@ -225,33 +211,29 @@ export default function Sessions() {
           <p className="text-gray-600">Manage your tutoring sessions</p>
         </div>
 
-        {/* Role Toggle - Always visible since all users are both student and tutor */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-6 inline-flex">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-6 inline-flex">
-            <button
-              onClick={() => setRoleView('student')}
-              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                roleView === 'student'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              As Student
-            </button>
-            <button
-              onClick={() => setRoleView('tutor')}
-              className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                roleView === 'tutor'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              As Tutor
-            </button>
-          </div>
+          <button
+            onClick={() => setRoleView('student')}
+            className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              roleView === 'student'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            As Student
+          </button>
+          <button
+            onClick={() => setRoleView('tutor')}
+            className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              roleView === 'tutor'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            As Tutor
+          </button>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1 mb-8 inline-flex">
           {[
             { key: 'all', label: `All (${counts.all})` },
@@ -304,7 +286,6 @@ export default function Sessions() {
                 hour12: true
               });
 
-              // Determine what actions are available
               const isPast = sessionDate < new Date();
               const isUpcoming = !isPast && ['upcoming', 'pending', 'confirmed'].includes(booking.status);
               const isCompleted = booking.status === 'completed';
