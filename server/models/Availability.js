@@ -12,6 +12,6 @@ const messageSchema = new mongoose.Schema({
   readAt: Date
 }, { strict: false });
 
-const Message = mongoose.model('Message', messageSchema);
+const Availability = mongoose.model('Availability', availabilitySchema);
 
 export default Message;
