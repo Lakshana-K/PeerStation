@@ -1,17 +1,18 @@
 import mongoose from 'mongoose';
 
-const messageSchema = new mongoose.Schema({
-  messageId: { type: String, required: true, unique: true },
-  senderId: { type: String, required: true },
-  receiverId: { type: String, required: true },
-  conversationId: String,
-  content: String,
-  attachments: [{ type: mongoose.Schema.Types.Mixed }],
-  sentAt: { type: Date, default: Date.now },
-  isRead: { type: Boolean, default: false },
-  readAt: Date
+const availabilitySchema = new mongoose.Schema({
+  slotId: { type: String, required: true, unique: true },
+  tutorId: { type: String, required: true },
+  date: String,
+  dayOfWeek: String,
+  startTime: String,
+  endTime: String,
+  format: String,
+  location: String,
+  isRecurring: { type: Boolean, default: false },
+  isBlocked: { type: Boolean, default: false }
 }, { strict: false });
 
 const Availability = mongoose.model('Availability', availabilitySchema);
 
-export default Message;
+export default Availability;
