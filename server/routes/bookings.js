@@ -23,27 +23,10 @@ function cryptoRandomId() {
 router.get('/', async (req, res) => {
   try {
     const bookings = await Booking.find();
-    
-    if (!bookings || bookings.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No bookings found',
-        data: []
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings
-    });
+    res.json(bookings); // Returns array directly
   } catch (error) {
     console.error('Error getting bookings:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to retrieve bookings',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -63,26 +46,14 @@ router.get('/', async (req, res) => {
 router.get('/student/:studentId', async (req, res) => {
   try {
     if (!req.params.studentId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Student ID is required'
-      });
+      return res.status(400).json({ message: 'Student ID is required' });
     }
 
     const bookings = await Booking.find({ studentId: req.params.studentId });
-    
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings
-    });
+    res.json(bookings); // Returns array directly
   } catch (error) {
     console.error('Error getting student bookings:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to retrieve student bookings',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -102,26 +73,14 @@ router.get('/student/:studentId', async (req, res) => {
 router.get('/tutor/:tutorId', async (req, res) => {
   try {
     if (!req.params.tutorId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tutor ID is required'
-      });
+      return res.status(400).json({ message: 'Tutor ID is required' });
     }
 
     const bookings = await Booking.find({ tutorId: req.params.tutorId });
-    
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings
-    });
+    res.json(bookings); // Returns array directly
   } catch (error) {
     console.error('Error getting tutor bookings:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to retrieve tutor bookings',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -166,7 +125,6 @@ router.post('/', async (req, res) => {
     
     if (missingFields.length > 0) {
       return res.status(400).json({
-        success: false,
         message: `Missing required fields: ${missingFields.join(', ')}`
       });
     }
@@ -174,16 +132,17 @@ router.post('/', async (req, res) => {
     // Validate duration
     if (req.body.duration <= 0) {
       return res.status(400).json({
-        success: false,
         message: 'Duration must be greater than 0'
       });
     }
 
-    // Validate date is not in the past
+    // Validate date is not in the past (only for new bookings, not past ones)
     const scheduledDateTime = new Date(`${req.body.scheduledDate}T${req.body.scheduledTime}`);
-    if (scheduledDateTime < new Date()) {
+    const now = new Date();
+    
+    // Allow creating past bookings if status is already set to 'completed'
+    if (scheduledDateTime < now && req.body.status !== 'completed') {
       return res.status(400).json({
-        success: false,
         message: 'Cannot book sessions in the past'
       });
     }
@@ -198,18 +157,10 @@ router.post('/', async (req, res) => {
     const newBooking = new Booking(bookingData);
     await newBooking.save();
     
-    res.status(201).json({
-      success: true,
-      message: 'Booking created successfully',
-      data: newBooking
-    });
+    res.status(201).json(newBooking); // Returns booking object directly
   } catch (error) {
     console.error('Error creating booking:', error);
-    res.status(400).json({ 
-      success: false,
-      message: 'Failed to create booking',
-      error: error.message 
-    });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -229,10 +180,7 @@ router.post('/', async (req, res) => {
 router.put('/:bookingId', async (req, res) => {
   try {
     if (!req.params.bookingId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking ID is required'
-      });
+      return res.status(400).json({ message: 'Booking ID is required' });
     }
 
     const booking = await Booking.findOneAndUpdate(
@@ -242,24 +190,13 @@ router.put('/:bookingId', async (req, res) => {
     );
     
     if (!booking) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Booking not found" 
-      });
+      return res.status(404).json({ message: "Booking not found" });
     }
     
-    res.status(200).json({
-      success: true,
-      message: 'Booking updated successfully',
-      data: booking
-    });
+    res.json(booking); // Returns booking object directly
   } catch (error) {
     console.error('Error updating booking:', error);
-    res.status(400).json({ 
-      success: false,
-      message: 'Failed to update booking',
-      error: error.message 
-    });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -279,32 +216,19 @@ router.put('/:bookingId', async (req, res) => {
 router.delete('/:bookingId', async (req, res) => {
   try {
     if (!req.params.bookingId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Booking ID is required'
-      });
+      return res.status(400).json({ message: 'Booking ID is required' });
     }
 
     const result = await Booking.findOneAndDelete({ bookingId: req.params.bookingId });
     
     if (!result) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found'
-      });
+      return res.status(404).json({ message: 'Booking not found' });
     }
     
-    res.status(200).json({ 
-      success: true,
-      message: 'Booking deleted successfully'
-    });
+    res.json({ ok: true, message: 'Booking deleted successfully' });
   } catch (error) {
     console.error('Error deleting booking:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to delete booking',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 

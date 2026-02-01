@@ -23,27 +23,10 @@ function cryptoRandomId() {
 router.get('/', async (req, res) => {
   try {
     const users = await User.find();
-    
-    if (!users || users.length === 0) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'No users found',
-        data: [] 
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      data: users
-    });
+    res.json(users); // Returns array directly
   } catch (error) {
     console.error('Error getting users:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to retrieve users',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -82,7 +65,6 @@ router.post('/', async (req, res) => {
     // Validation
     if (!req.body.name || !req.body.email) {
       return res.status(400).json({
-        success: false,
         message: 'Name and email are required fields'
       });
     }
@@ -91,7 +73,6 @@ router.post('/', async (req, res) => {
     const existingUser = await User.findOne({ email: req.body.email });
     if (existingUser) {
       return res.status(400).json({
-        success: false,
         message: 'Email already registered'
       });
     }
@@ -107,27 +88,18 @@ router.post('/', async (req, res) => {
     const newUser = new User(userData);
     await newUser.save();
     
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully',
-      data: newUser
-    });
+    res.status(201).json(newUser); // Returns user object directly
   } catch (error) {
     console.error('Error creating user:', error);
     
     // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({
-        success: false,
         message: 'User with this email or userId already exists'
       });
     }
     
-    res.status(400).json({ 
-      success: false,
-      message: 'Failed to create user',
-      error: error.message 
-    });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -168,10 +140,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body || {};
     
     if (!email) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Email is required" 
-      });
+      return res.status(400).json({ message: "Email is required" });
     }
     
     const user = await User.findOne({ email: email.trim() });
@@ -180,31 +149,17 @@ router.post('/login', async (req, res) => {
     console.log('===== END LOGIN ATTEMPT =====\n');
     
     if (!user) {
-      return res.status(401).json({ 
-        success: false,
-        message: "Invalid credentials" 
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Account is deactivated"
-      });
+      return res.status(403).json({ message: "Account is deactivated" });
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      data: user
-    });
+    res.json(user); // Returns user object directly
   } catch (error) {
     console.error('Error during login:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Login failed',
-      error: error.message 
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -237,10 +192,7 @@ router.post('/login', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     if (!req.params.id) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID is required'
-      });
+      return res.status(400).json({ message: 'User ID is required' });
     }
 
     const user = await User.findOneAndUpdate(
@@ -250,24 +202,13 @@ router.put('/:id', async (req, res) => {
     );
     
     if (!user) {
-      return res.status(404).json({ 
-        success: false,
-        message: "User not found" 
-      });
+      return res.status(404).json({ message: "User not found" });
     }
     
-    res.status(200).json({
-      success: true,
-      message: 'User updated successfully',
-      data: user
-    });
+    res.json(user); // Returns user object directly
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(400).json({ 
-      success: false,
-      message: 'Failed to update user',
-      error: error.message 
-    });
+    res.status(400).json({ message: error.message });
   }
 });
 
