@@ -1,7 +1,3 @@
-// ========================================
-// FILE: server/server.js
-// WITH SWAGGER UI DOCUMENTATION
-// ========================================
 
 import express from "express";
 import cors from "cors";
